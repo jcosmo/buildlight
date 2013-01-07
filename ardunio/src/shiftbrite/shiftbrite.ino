@@ -21,6 +21,10 @@
 #define INTENSITY 1023
 
 HughesyShiftBrite led;
+int flash_r;
+int flash_g;
+int flash_b;
+boolean flash;
 
 void setup() {
   pinMode(POWER_pin, OUTPUT);     
@@ -37,7 +41,12 @@ void setup() {
 }
 
 void loop() {
-  delay(100);
+  if ( flash ) {
+    delay(500);
+    led.sendColour(0,0,0);
+    delay(500);    
+    led.sendColour(flash_r,flash_g,flash_b);
+  }
 }
 
 void serialEvent() {  
@@ -52,12 +61,18 @@ void serialEvent() {
     case 'B': blue();     break;
     case 'Y': yellow();  break;
     case 'O': off();      break;
+    case 'F': toggle_flash();      break;
   }
 }
 
 void update_led(int R, int G, int B) {
   led.sendColour(R, G, B);
+  flash_r = R;
+  flash_g = G;
+  flash_b = B;
 }
+
+
 
 // Translate a value from rgb (0->255) to shiftbrite (0->1023)
 int SCALE = 1023/255;
@@ -69,5 +84,6 @@ void red() {  update_led(INTENSITY,0,0); }
 void green() {  update_led(0,INTENSITY,0); }
 void blue() {  update_led(0,0,INTENSITY); }
 void yellow() {  update_led(x(255),x(128),0); }
-void off() { update_led(0,0,0); }
+void off() { flash = false; update_led(0,0,0); }
 
+void toggle_flash() { flash = !flash; }
