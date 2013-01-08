@@ -1,11 +1,13 @@
 // Axis indexes;
 X = 0; Y = 1; Z = 2;
 
-FalconScale = 1.5;
+FalconScale = 2;
 FalconMOffset = [0,-2.41,0];
 FalconBOffset = [0.3,0,-3];
 ArduinoOffset = [0,0,FalconScale * FalconBOffset[Z]];
 
+echo( "Falcon at ", FalconScale, "x is ", (FalconScale * 95), " long, ", (FalconScale*70), " wide and ", (FalconScale*22), " tall" );
+// scalebar();
 translate(ArduinoOffset) rotate([0,0,180]) arduino();
 falcon();
 
@@ -30,14 +32,23 @@ module falcon() {
   scale(FalconScale)
     rotate([0,0,90]) {
       color( "Salmon", O) 
-        import_stl( "falcon2_top.stl" );
+        import( "falcon2_top.stl" );
       color( "DarkSalmon", O) 
-        translate(FalconMOffset) rotate([0,180,0]) import_stl( "falcon2_middle.stl" );
+        translate(FalconMOffset) rotate([0,180,0]) import( "falcon2_middle.stl" );
       color( "Salmon", O) 
-        translate(FalconBOffset) rotate([0,180,0]) import_stl( "falcon2_bottom.stl" );
+        translate(FalconBOffset) rotate([0,180,0]) import( "falcon2_bottom.stl" );
     }
 }
 
+module scalebar() {
+  scale(FalconScale) {
+    color("Blue", 1) {
+      translate([-48,-1,-1]) cube([95, 2, 2]);
+      rotate([0,0,90]) translate([-35,-1,-1]) cube([70, 2, 2]);
+      rotate([0,90,0]) translate([-8,-1,-1]) cube([22, 2, 2]);
+    }
+  }
+}
 
 // Centre B in A along given axis
 function centre( A, B, axis ) =
