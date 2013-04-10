@@ -11,7 +11,7 @@ Arduino Uno has:
 Intend to support lights:
  - RGB: 3,5,6 + Gnd
  - RGB: 9,10,11 + Gnd
- - Shiftbrite: 2,4,7,8 + Prd + Gnd
+ - Shiftbrite: 2,4,7,8 + Pwr + Gnd
  - 8 * single colour led
    
    
