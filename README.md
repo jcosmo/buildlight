@@ -12,7 +12,7 @@ Intend to support lights:
  - RGB: 3,5,6 + 5V
  - RGB: 9,10,11 + 5V
  - Shiftbrite: 7,8,12,13 + Pwr + Gnd
- - 8 * single colour led: 2xR, 3xG, 3xY
+ - 8 * single colour led: 3xR, 2xG, 3xY: 2,4, A0->A5
    
    
 Possible that digital pins 0 & 1 might be usable, but if you can't work with 11 lights then you're stuffed.

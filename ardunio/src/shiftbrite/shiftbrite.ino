@@ -10,13 +10,13 @@
 
 #include "HughesyShiftBrite.h"
 
-#define POWER_pin 1
-#define GND_pin 6
-
-#define DATA_pin  5
-#define LATCH_pin  4
-#define ENABLE_pin  3
-#define CLOCK_pin  2
+#define ORIENTATION 1
+#define POWER_pin 2
+#define CLOCK_pin  (POWER_pin + ORIENTATION)
+#define ENABLE_pin   (CLOCK_pin + ORIENTATION)
+#define LATCH_pin   (ENABLE_pin + ORIENTATION)
+#define DATA_pin   (LATCH_pin + ORIENTATION)
+#define GND_pin  (DATA_pin + ORIENTATION)
 
 #define INTENSITY 1023
 
