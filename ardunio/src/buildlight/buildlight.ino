@@ -10,13 +10,16 @@
   [colour]: R,G,B optional, only used on RGB0, RGB1, SB0
 */
 
+#include "HughesyShiftBrite.h"
+
 #define DEBUG
 
 typedef struct colour { unsigned int r; unsigned int g; unsigned int b; } Colour;
 typedef struct { Colour colour; unsigned int pins[3]; bool on; bool flash; } RGBLed;
-
+typedef struct { unsigned int enable, unsigned int latch, unsigned int data, unsigned int clock; bool on; bool flash;} ShiftBrite;
 
 RGBLed rgb_leds[2];
+ShiftBrite shiftBrite[1];
 
 unsigned int led_pins[] = {2,4,A0,A1,A2,A3,A4,A5};
 bool led_on[8];
@@ -125,6 +128,48 @@ void toggle_rgb_state( unsigned int idx )
   update_rgb( idx );
 }
 
+void update_shiftBrite( unsigned int idx )
+{
+  todo
+}
+
+void set_shiftBrite_colour( unsigned int idx, struct colour c )
+{
+todo
+  update_shiftBrite(idx);
+}
+
+void toggle_shiftBrite_flash( unsigned int idx )
+{
+  shiftBrite[idx].flash = !shiftBrite[idx].flash;
+}
+
+void toggle_shiftBrite_state( unsigned int idx )
+{
+  shiftBrite[idx].on = !shiftBrite[idx].on;
+  update_shiftBrite( idx );
+}
+
+void set_shiftBrite_on( unsigned int idx )
+{
+  shiftBrite[idx].flash = false;
+  if ( !shiftBrite[idx].on )
+  {
+    shiftBrite[idx].on = true;
+    update_shiftBrite(idx);
+  }
+}
+
+void set_shiftBrite_off( unsigned int idx )
+{
+  shiftBrite[idx].flash = false;
+  if ( shiftBrite[idx].on )
+  {
+    shiftBrite[idx].on = false;
+    update_shiftBrite(idx);
+  }
+}
+
 #ifdef DEBUG
 void debug_pattern()
 {
@@ -155,13 +200,14 @@ void setup()
 {
   rgb_leds[0] = (RGBLed){{255,255,255}, {6,3,5}, false, false};
   rgb_leds[1] = (RGBLed){{255,255,255}, {11,9,10}, false, false};
+  shiftBrite[0] = (ShiftBrite){SB_WHITE, 7,8,12,13, false, false};
 
   for( unsigned int i = 0; i < sizeof(led_pins)/sizeof(led_pins[0]); i++)
   {
     led_on[i] = false;
     led_flash[i] = false;
     pinMode(led_pins[i], OUTPUT);
-    digitalWrite(led_pins[i], LOW);
+    update_led(i);
   }
 
   for( unsigned int i = 0; i < sizeof(rgb_leds)/sizeof(rgb_leds[0]); i++)
@@ -169,11 +215,18 @@ void setup()
     pinMode(rgb_leds[i].pins[0], OUTPUT);
     pinMode(rgb_leds[i].pins[1], OUTPUT);
     pinMode(rgb_leds[i].pins[2], OUTPUT);
-    analogWrite(rgb_leds[i].pins[0], 255);
-    analogWrite(rgb_leds[i].pins[1], 255);
-    analogWrite(rgb_leds[i].pins[2], 255);
+    update_rgb(i);
   }
 
+  for( unsigned int i = 0; i < sizeof(shiftBrite)/sizeof(shiftBrite[0]); i++)
+  {
+    pinMode(shiftBrite[i].enable, OUTPUT);
+    pinMode(shiftBrite[i].clock, OUTPUT);
+    pinMode(shiftBrite[i].data, OUTPUT);
+    pinMode(shiftBrite[i].latch, OUTPUT);
+    update_shiftBrite(i);
+  }  
+  
 /*
   Serial.begin(9600);
   Serial.setTimeout(100);
@@ -193,6 +246,10 @@ void loop()
   for( unsigned int i = 0; i < sizeof(rgb_leds)/sizeof(rgb_leds[0]); i++)
     if ( rgb_leds[i].flash )
       toggle_rgb_state( i );
+
+  for( unsigned int i = 0; i < sizeof(shiftBrite)/sizeof(shiftBrite[0]); i++)
+    if ( shiftBrite[i].flash )
+      toggle_shiftBrite_state( i );
 
   delay(500);
 }
