@@ -105,12 +105,14 @@ void set_rgb_colour( unsigned int idx, struct colour c )
 
 void set_rgb_on( unsigned int idx )
 {
+  rgb_leds[idx].flash = false;
   rgb_leds[idx].on = true;
   update_rgb(idx);
 }
 
 void set_rgb_off( unsigned int idx )
 {
+  rgb_leds[idx].flash = false;
   rgb_leds[idx].on = false;
   update_rgb(idx);
 }
