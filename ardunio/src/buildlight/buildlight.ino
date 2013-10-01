@@ -286,6 +286,47 @@ void led_cmd( unsigned int offset, char *cmd )
     Serial.println(String("Invalid LED command structure: ") + cmd);
 }
 
+void rgb_cmd_colour( int idx, char *colour )
+{
+  int r,g,b;
+  if ( sscanf( colour, "%d,%d,%d", &r, &g, &b) == 3 )
+  {
+    set_rgb_colour( idx, (struct colour){255-constrain(r, 0, 255), 255-constrain(g, 0, 255), 255-constrain(b, 0, 255)} );
+  }
+}
+
+void rgb_cmd( char *cmd )
+{
+  int idx;
+  char op[80];
+  char arg[80];
+  int r,g,b;
+  if ( sscanf(cmd + sizeof(char), "%d %s %s", &idx, op, arg) >= 2)
+  {
+    if ( idx >= sizeof(rgb_leds)/sizeof(rgb_leds[0]))
+    {
+      Serial.println(String("Invalid tri-colour index: [") + idx + "]");
+      return;
+    }
+    if ( String("ON").equalsIgnoreCase(op) )
+    {
+      rgb_cmd_colour( idx, arg );
+      set_rgb_on( idx );
+    }
+    else if ( String("OFF").equalsIgnoreCase(op) )
+      set_rgb_off( idx  );
+    else if ( String("FLASH").equalsIgnoreCase(op) )
+    {
+      rgb_cmd_colour( idx, arg );
+      set_rgb_flash( idx );
+    }
+    else
+      Serial.println(String("Invalid tri-colour command: [") + op + "]");
+  }
+  else
+    Serial.println(String("Invalid tri-colour command structure: ") + cmd);
+}
+
 void serialEvent() {
   char   cmd_str[80];
   int    cmd_length;
@@ -304,6 +345,7 @@ void serialEvent() {
     case 'R': case 'r': led_cmd(RED_OFFSET, cmd_str);    break;
     case 'G': case 'g': led_cmd(GRN_OFFSET, cmd_str);    break;
     case 'Y': case 'y': led_cmd(YEL_OFFSET, cmd_str);    break;
+    case 'T': case 't': rgb_cmd(cmd_str);    break;
     default:
       Serial.println(String("Unrecognised command: ") + cmd_str);
   }
