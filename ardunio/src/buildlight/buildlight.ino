@@ -327,6 +327,47 @@ void rgb_cmd( char *cmd )
     Serial.println(String("Invalid tri-colour command structure: ") + cmd);
 }
 
+void sb_cmd_colour( int idx, char *colour )
+{
+  int r,g,b;
+  if ( sscanf( colour, "%d,%d,%d", &r, &g, &b) == 3 )
+  {
+    set_shiftBrite_colour( idx, (struct colour){255-constrain(r, 0, 255), 255-constrain(g, 0, 255), 255-constrain(b, 0, 255)} );
+  }
+}
+
+void sb_cmd( char *cmd )
+{
+  int idx;
+  char op[80];
+  char arg[80];
+  int r,g,b;
+  if ( sscanf(cmd + sizeof(char), "%d %s %s", &idx, op, arg) >= 2)
+  {
+    if ( idx >= sizeof(shiftBrite)/sizeof(shiftBrite[0]))
+    {
+      Serial.println(String("Invalid shiftBrite index: [") + idx + "]");
+      return;
+    }
+    if ( String("ON").equalsIgnoreCase(op) )
+    {
+      sb_cmd_colour( idx, arg );
+      set_shiftBrite_on( idx );
+    }
+    else if ( String("OFF").equalsIgnoreCase(op) )
+      set_shiftBrite_off( idx  );
+    else if ( String("FLASH").equalsIgnoreCase(op) )
+    {
+      sb_cmd_colour( idx, arg );
+      set_shiftBrite_flash( idx );
+    }
+    else
+      Serial.println(String("Invalid shiftBrite command: [") + op + "]");
+  }
+  else
+    Serial.println(String("Invalid shiftBrite command structure: ") + cmd);
+}
+
 void serialEvent() {
   char   cmd_str[80];
   int    cmd_length;
@@ -339,13 +380,14 @@ void serialEvent() {
         [light] ON/OFF/FLASH [Colour]?
 
     [light]: T0, T1, S0, R0, R1, G0, G1, G2, Y0, Y1, Y2  (T => TriColour, S => ShiftBrite)
-    [colour]: R,G,B optional, only used on RGB0, RGB1, SB0
+    [colour]: R,G,B optional, only used on T#, S#
   */
   switch(cmd_str[0]) {
     case 'R': case 'r': led_cmd(RED_OFFSET, cmd_str);    break;
     case 'G': case 'g': led_cmd(GRN_OFFSET, cmd_str);    break;
     case 'Y': case 'y': led_cmd(YEL_OFFSET, cmd_str);    break;
     case 'T': case 't': rgb_cmd(cmd_str);    break;
+    case 'TS': case 's': sb_cmd(cmd_str);    break;
     default:
       Serial.println(String("Unrecognised command: ") + cmd_str);
   }
