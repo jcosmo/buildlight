@@ -60,21 +60,15 @@ void toggle_led_state( unsigned int idx )
 void set_led_on( unsigned int idx )
 {
   led_flash[idx] = false;
-  if ( !led_on[idx] )
-  {
-    led_on[idx] = true;
-    update_led(idx);
-  }
+  led_on[idx] = true;
+  update_led(idx);
 }
 
 void set_led_off( unsigned int idx )
 {
   led_flash[idx] = false;
-  if ( led_on[idx] )
-  {
-    led_on[idx] = false;
-    update_led(idx);
-  }
+  led_on[idx] = false;
+  update_led(idx);
 }
 
 void update_rgb( unsigned int idx )
