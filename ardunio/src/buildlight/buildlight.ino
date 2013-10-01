@@ -16,7 +16,9 @@
 
 typedef struct colour { unsigned int r; unsigned int g; unsigned int b; } Colour;
 typedef struct { Colour colour; unsigned int pins[3]; bool on; bool flash; } RGBLed;
-typedef struct { unsigned int enable, unsigned int latch, unsigned int data, unsigned int clock; bool on; bool flash;} ShiftBrite;
+typedef struct { Colour colour;
+                 unsigned int enable; unsigned int latch; unsigned int data; unsigned int clock;
+                 bool on; bool flash; HughesyShiftBrite hsb; } ShiftBrite;
 
 RGBLed rgb_leds[2];
 ShiftBrite shiftBrite[1];
@@ -27,6 +29,7 @@ bool led_flash[8];
 int RED_OFFSET = 0;
 int GRN_OFFSET = RED_OFFSET + 3;
 int YEL_OFFSET = GRN_OFFSET + 2;
+int flash_speed = 250;
 
 // RGB led colours for convienence
 Colour RED = {0,255,255};
@@ -36,6 +39,7 @@ Colour YELLOW = {0,0,255};
 Colour PURPLE = {0,255,0};
 Colour CYAN = {255,0,0};
 Colour WHITE = {0,0,0};
+Colour SB_BLACK = {0,0,0};
 
 void update_led( unsigned int idx )
 {
@@ -130,12 +134,18 @@ void toggle_rgb_state( unsigned int idx )
 
 void update_shiftBrite( unsigned int idx )
 {
-  todo
+  if ( shiftBrite[idx].on )
+    shiftBrite[idx].hsb.sendColour(shiftBrite[idx].colour.r,shiftBrite[idx].colour.g,shiftBrite[idx].colour.b);
+  else
+    shiftBrite[idx].hsb.sendColour(SB_BLACK.r, SB_BLACK.g, SB_BLACK.b);
 }
 
+float SB_RGB_SCALE = 1023/255;
 void set_shiftBrite_colour( unsigned int idx, struct colour c )
 {
-todo
+  shiftBrite[idx].colour.r = (int)((255-c.r) * SB_RGB_SCALE);
+  shiftBrite[idx].colour.g = (int)((255-c.g) * SB_RGB_SCALE);
+  shiftBrite[idx].colour.b = (int)((255-c.b) * SB_RGB_SCALE);
   update_shiftBrite(idx);
 }
 
@@ -147,7 +157,7 @@ void toggle_shiftBrite_flash( unsigned int idx )
 void toggle_shiftBrite_state( unsigned int idx )
 {
   shiftBrite[idx].on = !shiftBrite[idx].on;
-  update_shiftBrite( idx );
+  update_shiftBrite(idx);
 }
 
 void set_shiftBrite_on( unsigned int idx )
@@ -193,6 +203,9 @@ void debug_pattern()
   set_rgb_colour(1, PURPLE );
   set_rgb_on(1);
   toggle_rgb_flash(0);
+
+  set_shiftBrite_colour(0, GREEN);
+  toggle_shiftBrite_flash(0);
 }
 #endif
 
@@ -200,7 +213,7 @@ void setup()
 {
   rgb_leds[0] = (RGBLed){{255,255,255}, {6,3,5}, false, false};
   rgb_leds[1] = (RGBLed){{255,255,255}, {11,9,10}, false, false};
-  shiftBrite[0] = (ShiftBrite){SB_WHITE, 7,8,12,13, false, false};
+  shiftBrite[0] = (ShiftBrite){SB_BLACK, 7,8,12,13, false, false};
 
   for( unsigned int i = 0; i < sizeof(led_pins)/sizeof(led_pins[0]); i++)
   {
@@ -224,6 +237,7 @@ void setup()
     pinMode(shiftBrite[i].clock, OUTPUT);
     pinMode(shiftBrite[i].data, OUTPUT);
     pinMode(shiftBrite[i].latch, OUTPUT);
+    shiftBrite[i].hsb = HughesyShiftBrite( shiftBrite[i].data, shiftBrite[i].latch, shiftBrite[i].enable, shiftBrite[i].clock );
     update_shiftBrite(i);
   }  
   
@@ -251,6 +265,6 @@ void loop()
     if ( shiftBrite[i].flash )
       toggle_shiftBrite_state( i );
 
-  delay(500);
+  delay(flash_speed);
 }
 
