@@ -304,13 +304,12 @@ void serialEvent() {
     [light]: T0, T1, S0, R0, R1, G0, G1, G2, Y0, Y1, Y2  (T => TriColour, S => ShiftBrite)
     [colour]: R,G,B optional, only used on RGB0, RGB1, SB0
   */
-  if ( 'R' == cmd_str[0] || 'r' == cmd_str[0] )
-    led_cmd( RED_OFFSET, cmd_str );
-  else if ( 'G' == cmd_str[0] || 'g' == cmd_str[0])
-    led_cmd( GRN_OFFSET, cmd_str );
-  else if ( 'Y' == cmd_str[0] || 'y' == cmd_str[0])
-    led_cmd( YEL_OFFSET, cmd_str );
-  else
-    Serial.println(String("Unrecognised command: ") + cmd_str);
+  switch(cmd_str[0]) {
+    case 'R': case 'r': led_cmd(RED_OFFSET, cmd_str);    break;
+    case 'G': case 'g': led_cmd(GRN_OFFSET, cmd_str);    break;
+    case 'Y': case 'y': led_cmd(YEL_OFFSET, cmd_str);    break;
+    default:
+      Serial.println(String("Unrecognised command: ") + cmd_str);
+  }
 }
 
