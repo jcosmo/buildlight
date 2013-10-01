@@ -387,7 +387,7 @@ void serialEvent() {
     case 'G': case 'g': led_cmd(GRN_OFFSET, cmd_str);    break;
     case 'Y': case 'y': led_cmd(YEL_OFFSET, cmd_str);    break;
     case 'T': case 't': rgb_cmd(cmd_str);    break;
-    case 'TS': case 's': sb_cmd(cmd_str);    break;
+    case 'S': case 's': sb_cmd(cmd_str);    break;
     default:
       Serial.println(String("Unrecognised command: ") + cmd_str);
   }
