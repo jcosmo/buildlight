@@ -6,13 +6,13 @@
   Commands:
       [light] ON/OFF/FLASH [Colour]?
 
-  [light]: RGB0, RGB1, SB0, R0, R1, G0, G1, G2, Y0, Y1, Y2
+  [light]: T0, T1, S0, R0, R1, G0, G1, G2, Y0, Y1, Y2  (T => TriColour, S => ShiftBrite)
   [colour]: R,G,B optional, only used on RGB0, RGB1, SB0
 */
 
 #include "HughesyShiftBrite.h"
 
-#define DEBUG
+//#define DEBUG
 
 typedef struct colour { unsigned int r; unsigned int g; unsigned int b; } Colour;
 typedef struct { Colour colour; unsigned int pins[3]; bool on; bool flash; } RGBLed;
@@ -46,9 +46,9 @@ void update_led( unsigned int idx )
   digitalWrite( led_pins[idx], led_on[idx] ? HIGH : LOW );
 }
 
-void toggle_led_flash( unsigned int idx )
+void set_led_flash( unsigned int idx )
 {
-  led_flash[idx] = !led_flash[idx];
+  led_flash[idx] = true;
 }
 
 void toggle_led_state( unsigned int idx )
@@ -121,9 +121,9 @@ void set_rgb_off( unsigned int idx )
   update_rgb(idx);
 }
 
-void toggle_rgb_flash( unsigned int idx )
+void set_rgb_flash( unsigned int idx )
 {
-  rgb_leds[idx].flash = !rgb_leds[idx].flash;
+  rgb_leds[idx].flash = true;
 }
 
 void toggle_rgb_state( unsigned int idx )
@@ -149,9 +149,9 @@ void set_shiftBrite_colour( unsigned int idx, struct colour c )
   update_shiftBrite(idx);
 }
 
-void toggle_shiftBrite_flash( unsigned int idx )
+void set_shiftBrite_flash( unsigned int idx )
 {
-  shiftBrite[idx].flash = !shiftBrite[idx].flash;
+  shiftBrite[idx].flash = true;
 }
 
 void toggle_shiftBrite_state( unsigned int idx )
@@ -241,10 +241,8 @@ void setup()
     update_shiftBrite(i);
   }  
   
-/*
   Serial.begin(9600);
   Serial.setTimeout(100);
-*/
 
 #ifdef DEBUG
   debug_pattern();
@@ -266,5 +264,53 @@ void loop()
       toggle_shiftBrite_state( i );
 
   delay(flash_speed);
+}
+
+void led_cmd( unsigned int offset, char *cmd )
+{
+  int idx;
+  char op[80];
+  if ( 2 == sscanf(cmd + sizeof(char), "%d %s", &idx, op))
+  {
+    if ( idx + offset >= sizeof(led_pins)/sizeof(led_pins[0]))
+    {
+      Serial.println(String("Invalid led pin index: [") + idx + "]");
+      return;
+    }
+    if ( String("ON").equalsIgnoreCase(op) )
+      set_led_on( idx + offset );
+    else if ( String("OFF").equalsIgnoreCase(op) )
+      set_led_off( idx + offset );
+    else if ( String("FLASH").equalsIgnoreCase(op) )
+      set_led_flash( idx + offset );
+    else
+      Serial.println(String("Invalid led pin command: [") + op + "]");
+  }
+  else
+    Serial.println(String("Invalid LED command structure: ") + cmd);
+}
+
+void serialEvent() {
+  char   cmd_str[80];
+  int    cmd_length;
+  int    led_value;
+  cmd_length =   Serial.readBytesUntil('\n', cmd_str, 80);
+  cmd_str[cmd_length] = '\0';
+
+  /*
+    Commands:
+        [light] ON/OFF/FLASH [Colour]?
+
+    [light]: T0, T1, S0, R0, R1, G0, G1, G2, Y0, Y1, Y2  (T => TriColour, S => ShiftBrite)
+    [colour]: R,G,B optional, only used on RGB0, RGB1, SB0
+  */
+  if ( 'R' == cmd_str[0] || 'r' == cmd_str[0] )
+    led_cmd( RED_OFFSET, cmd_str );
+  else if ( 'G' == cmd_str[0] || 'g' == cmd_str[0])
+    led_cmd( GRN_OFFSET, cmd_str );
+  else if ( 'Y' == cmd_str[0] || 'y' == cmd_str[0])
+    led_cmd( YEL_OFFSET, cmd_str );
+  else
+    Serial.println(String("Unrecognised command: ") + cmd_str);
 }
 
