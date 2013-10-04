@@ -5,9 +5,12 @@
 
   Commands:
       [light] ON/OFF/FLASH [Colour]?
+      off  = everything off until next command
+      flash [speed]
 
   [light]: T0, T1, S0, R0, R1, G0, G1, G2, Y0, Y1, Y2  (T => TriColour, S => ShiftBrite)
-  [colour]: R,G,B optional, only used on RGB0, RGB1, SB0
+  [colour]: R,G,B optional, only used on T#, S#
+  [speed]: milliseconds for each phase of a flash
 */
 
 #include "HughesyShiftBrite.h"
@@ -30,6 +33,7 @@ int RED_OFFSET = 0;
 int GRN_OFFSET = RED_OFFSET + 3;
 int YEL_OFFSET = GRN_OFFSET + 2;
 int flash_speed = 250;
+bool sleeping;
 
 // RGB led colours for convienence
 Colour RED = {0,255,255};
@@ -247,19 +251,36 @@ void setup()
 
 void loop()
 {
+  if ( sleeping )
+    delay( 30 * 1000 );
+  else
+  {
+    for( unsigned int i = 0; i < sizeof(led_pins)/sizeof(led_pins[0]); i++)
+      if ( led_flash[i] )
+        toggle_led_state( i );
+
+    for( unsigned int i = 0; i < sizeof(rgb_leds)/sizeof(rgb_leds[0]); i++)
+      if ( rgb_leds[i].flash )
+        toggle_rgb_state( i );
+
+    for( unsigned int i = 0; i < sizeof(shiftBrite)/sizeof(shiftBrite[0]); i++)
+      if ( shiftBrite[i].flash )
+        toggle_shiftBrite_state( i );
+
+    delay(flash_speed);
+  }
+}
+
+void all_off()
+{
   for( unsigned int i = 0; i < sizeof(led_pins)/sizeof(led_pins[0]); i++)
-    if ( led_flash[i] )
-      toggle_led_state( i );
+    set_led_off( i );
 
   for( unsigned int i = 0; i < sizeof(rgb_leds)/sizeof(rgb_leds[0]); i++)
-    if ( rgb_leds[i].flash )
-      toggle_rgb_state( i );
+    set_rgb_off( i );
 
   for( unsigned int i = 0; i < sizeof(shiftBrite)/sizeof(shiftBrite[0]); i++)
-    if ( shiftBrite[i].flash )
-      toggle_shiftBrite_state( i );
-
-  delay(flash_speed);
+    set_shiftBrite_off( i );
 }
 
 void led_cmd( unsigned int offset, char *cmd )
@@ -372,24 +393,39 @@ void serialEvent() {
   char   cmd_str[80];
   int    cmd_length;
   int    led_value;
-  cmd_length =   Serial.readBytesUntil('\n', cmd_str, 80);
+  cmd_length = Serial.readBytesUntil('\n', cmd_str, 79);
   cmd_str[cmd_length] = '\0';
 
   /*
     Commands:
         [light] ON/OFF/FLASH [Colour]?
+        off  = everything off until next command
+        flash [speed]
 
     [light]: T0, T1, S0, R0, R1, G0, G1, G2, Y0, Y1, Y2  (T => TriColour, S => ShiftBrite)
     [colour]: R,G,B optional, only used on T#, S#
+    [speed]: milliseconds for each phase of a flash
   */
-  switch(cmd_str[0]) {
-    case 'R': case 'r': led_cmd(RED_OFFSET, cmd_str);    break;
-    case 'G': case 'g': led_cmd(GRN_OFFSET, cmd_str);    break;
-    case 'Y': case 'y': led_cmd(YEL_OFFSET, cmd_str);    break;
-    case 'T': case 't': rgb_cmd(cmd_str);    break;
-    case 'S': case 's': sb_cmd(cmd_str);    break;
-    default:
-      Serial.println(String("Unrecognised command: ") + cmd_str);
+  int arg;
+  if ( String(cmd_str).equalsIgnoreCase("off") )
+  {
+    all_off();
+    sleeping = true;
+  }
+  else if ( sscanf(cmd_str, "flash %d", &arg) == 1 )
+    flash_speed = arg;
+  else
+  {
+    sleeping = false;
+    switch(cmd_str[0]) {
+      case 'R': case 'r': led_cmd(RED_OFFSET, cmd_str);    break;
+      case 'G': case 'g': led_cmd(GRN_OFFSET, cmd_str);    break;
+      case 'Y': case 'y': led_cmd(YEL_OFFSET, cmd_str);    break;
+      case 'T': case 't': rgb_cmd(cmd_str);    break;
+      case 'S': case 's': sb_cmd(cmd_str);    break;
+      default:
+          Serial.println(String("Unrecognised command: ") + cmd_str);
+    }
   }
 }
 
