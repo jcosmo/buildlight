@@ -12,10 +12,25 @@ LedOffset = [-15.5, -10.5, 9.5];   // Relative to centred falcon
 
 //echo( "Falcon at ", FalconScale, "x is ", (FalconScale * 95), " long, ", (FalconScale*70), " wide and ", (FalconScale*22), " tall" );
 // scalebar();
+difference() {
 union() {
-translate(ArduinoOffset) rotate([180,0,180]) arduino();
-translate(LedOffset) shiftbrite();
-translate(FalconOffset) falcon();
+translate(FalconOffset) falcon(true,false,false);
+//translate(ArduinoOffset) rotate([180,0,180]) arduino();
+//translate(LedOffset) shiftbrite();
+}
+translate(ArduinoOffset) rotate([180,0,180]) arduino_cutout();
+translate(LedOffset) shiftbrite_cutout();
+}
+
+module arduino_cutout() {
+  cube( [45, 20.5, 4.8] ); 
+}
+
+module shiftbrite_cutout() {
+  union() {
+    shiftbrite();
+    translate([0,0,-10]) cube([31,21,11.4]);
+  }
 }
 
 module arduino() {
@@ -56,22 +71,38 @@ module shiftbrite() {
   }
 }
 
-module falcon() {
+// holes at given spacing
+module holes(count, size, spacing) {
+  union() {
+    for (x = [0:count-1]) translate([spacing*x,0,0]) cylinder(h=10,r=(size/FalconScale)/2, $fn=40);
+  }
+}
+
+module falcon(top, middle, bottom) {
   O = 0.5;
   
   scale(FalconScale)
     rotate([0,0,90]) {
-    //color( "Salmon", O) 
-	difference() {
-       import( "falcon2top_fixed.stl" );
-	 translate([15,9,5.64]) cube([15,5,3]);	// remove bobbles on right
-	 translate([-25,9,5.64]) cube([15,5,3]);	// remove bobbles on left
-//	 translate([15,9,5.64]]) holes_3();	
-	}
+      if (top) {
+        //color( "Salmon", O) 
+        difference() {
+          import( "falcon2top_fixed.stl" );
+          translate([15,9,5.64]) cube([15,5,3]);	// remove bobbles on right
+          translate([-26,9,5.64]) cube([15,5,3]);	// remove bobbles on left
+          translate([16,11.3,-4]) holes(3, 3, 5);	
+          translate([-23.6,11.3,-4]) holes(3, 3, 5);	
+          translate([1.2,-10,-4]) rotate([0,0,90]) holes(2, 3, 5);
+          translate([-4.9,23,-2]) rotate([-8,0,0]) holes(2, 5, 12);
+        }
+      }
+      if (middle) {
 //      color( "DarkSalmon", O) 
-       translate(FalconMOffset) rotate([0,180,0]) import( "falcon2middle_fixed.stl" );
-//      color( "Salmon", O) //
-//        translate(FalconBOffset) rotate([0,180,0]) import( "falcon2bottom_fixed.stl" );
+        translate(FalconMOffset) rotate([0,180,0]) import( "falcon2middle_fixed.stl" );
+      }
+      if (bottom) {
+//      color( "Salmon", O);
+        translate(FalconBOffset) rotate([0,180,0]) import( "falcon2bottom_fixed.stl" );
+      }
     }
 }
 
