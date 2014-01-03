@@ -20,18 +20,18 @@
 typedef struct colour { unsigned int r; unsigned int g; unsigned int b; } Colour;
 typedef struct { Colour colour; unsigned int pins[3]; bool on; bool flash; } RGBLed;
 typedef struct { Colour colour;
-                 unsigned int enable; unsigned int latch; unsigned int data; unsigned int clock;
+                 unsigned int data; unsigned int latch; unsigned int enable; unsigned int clock;
                  bool on; bool flash; HughesyShiftBrite hsb; } ShiftBrite;
 
 RGBLed rgb_leds[2];
 ShiftBrite shiftBrite[1];
 
-unsigned int led_pins[] = {2,4,A0,A1,A2,A3,A4,A5};
+unsigned int led_pins[] = {2,4,A4,A5,A0,A1,A2,A3};
 bool led_on[8];
 bool led_flash[8];
 int RED_OFFSET = 0;
-int GRN_OFFSET = RED_OFFSET + 3;
-int YEL_OFFSET = GRN_OFFSET + 2;
+int YEL_OFFSET = RED_OFFSET + 4;
+int GRN_OFFSET = YEL_OFFSET + 2;
 int flash_speed = 250;
 bool sleeping;
 
@@ -185,16 +185,17 @@ void debug_pattern()
 {
   /* Debugging */
   set_led_on( RED_OFFSET + 0 );
-  toggle_led_flash( RED_OFFSET + 0 );
-  toggle_led_flash( RED_OFFSET + 1 );
-  toggle_led_flash( RED_OFFSET + 2 );
+  set_led_flash( RED_OFFSET + 0 );
+  set_led_flash( RED_OFFSET + 1 );
+  set_led_flash( RED_OFFSET + 2 );
+  set_led_flash( RED_OFFSET + 3 );
   set_led_on( GRN_OFFSET + 0 );
-  toggle_led_flash( GRN_OFFSET + 0 );
-  toggle_led_flash( GRN_OFFSET + 1 );
-  toggle_led_flash( YEL_OFFSET + 0 );
+  set_led_flash( GRN_OFFSET + 0 );
+  set_led_flash( GRN_OFFSET + 1 );
+  
+  set_led_flash( YEL_OFFSET + 0 );
   set_led_on( YEL_OFFSET + 1 );
-  toggle_led_flash( YEL_OFFSET + 1 );
-  toggle_led_flash( YEL_OFFSET + 2 );
+  set_led_flash( YEL_OFFSET + 1 );
 
   set_led_on( RED_OFFSET + 1 );
   set_led_on( GRN_OFFSET + 1 );
@@ -202,17 +203,17 @@ void debug_pattern()
   set_rgb_colour(0, WHITE );
   set_rgb_colour(1, PURPLE );
   set_rgb_on(1);
-  toggle_rgb_flash(0);
+  set_rgb_flash(0);
 
   set_shiftBrite_colour(0, GREEN);
-  toggle_shiftBrite_flash(0);
+  set_shiftBrite_flash(0);
 }
 #endif
 
 void setup()
 {
-  rgb_leds[0] = (RGBLed){{255,255,255}, {6,3,5}, false, false};
-  rgb_leds[1] = (RGBLed){{255,255,255}, {11,9,10}, false, false};
+  rgb_leds[0] = (RGBLed){{255,255,255}, {3,6,5}, false, false};
+  rgb_leds[1] = (RGBLed){{255,255,255}, {9,11,10}, false, false};
   shiftBrite[0] = (ShiftBrite){SB_BLACK, 7,8,12,13, false, false};
 
   for( unsigned int i = 0; i < sizeof(led_pins)/sizeof(led_pins[0]); i++)
