@@ -20,10 +20,16 @@ translate(FalconOffset) falcon(true,false,false);
 }
 translate(ArduinoOffset) rotate([180,0,180]) arduino_cutout();
 translate(LedOffset) shiftbrite_cutout();
+wire_cutout();
+}
+
+module wire_cutout() {
+  translate([-50,-25,-10]) cube([70,45,10]);
+  translate([-40,-15,-20]) cylinder(r=7,h=10);
 }
 
 module arduino_cutout() {
-  cube( [45, 20.5, 4.8] ); 
+  translate([0,-2.5,0] ) cube( [47, 25.5, 12.8] ); 
 }
 
 module shiftbrite_cutout() {
@@ -78,6 +84,19 @@ module holes(count, size, spacing) {
   }
 }
 
+module middle_to_top_clips() {
+  translate(FalconMOffset) {
+    translate([1.2,14,0]) difference() {
+      cylinder(r=28.5, h=1);
+      cylinder(r=27, h=1);
+      for( x = [0:5] ) rotate([0,0,x*60]) cube([20,60,5], center=true);
+    }
+    translate([-8,-40,0]) rotate([0,0,15]) cube([2,5,1], center=true);
+    translate([10,-40,0]) rotate([0,0,-15]) cube([2,5,1], center=true);
+    translate([-30,-10,0]) cube([2,10,5], center=true);
+  }
+}            
+
 module falcon(top, middle, bottom) {
   O = 0.5;
   
@@ -93,11 +112,15 @@ module falcon(top, middle, bottom) {
           translate([-23.6,11.3,-4]) holes(3, 3, 5);	
           translate([1.2,-10,-4]) rotate([0,0,90]) holes(2, 3, 5);
           translate([-4.9,23,-2]) rotate([-8,0,0]) holes(2, 5, 12);
+          middle_to_top_clips();
         }
       }
       if (middle) {
 //      color( "DarkSalmon", O) 
-        translate(FalconMOffset) rotate([0,180,0]) import( "falcon2middle_fixed.stl" );
+        translate(FalconMOffset) {
+          rotate([0,180,0]) import( "falcon2middle_fixed.stl" );
+        }
+        //middle_to_top_clips();
       }
       if (bottom) {
 //      color( "Salmon", O);
