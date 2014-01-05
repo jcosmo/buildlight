@@ -7,6 +7,7 @@
       [light] ON/OFF/FLASH [Colour]?
       off  = everything off until next command
       flash [speed]
+      sample
 
   [light]: T0, T1, S0, R0, R1, G0, G1, G2, Y0, Y1, Y2  (T => TriColour, S => ShiftBrite)
   [colour]: R,G,B optional, only used on T#, S#
@@ -14,8 +15,6 @@
 */
 
 #include "HughesyShiftBrite.h"
-
-//#define DEBUG
 
 typedef struct colour { unsigned int r; unsigned int g; unsigned int b; } Colour;
 typedef struct { Colour colour; unsigned int pins[3]; bool on; bool flash; } RGBLed;
@@ -26,7 +25,7 @@ typedef struct { Colour colour;
 RGBLed rgb_leds[2];
 ShiftBrite shiftBrite[1];
 
-unsigned int led_pins[] = {2,4,A4,A5,A0,A1,A2,A3};
+unsigned int led_pins[] = {A5,2,4,A4,A1,A0,A2,A3};
 bool led_on[8];
 bool led_flash[8];
 int RED_OFFSET = 0;
@@ -180,10 +179,8 @@ void set_shiftBrite_off( unsigned int idx )
   }
 }
 
-#ifdef DEBUG
-void debug_pattern()
+void sample_pattern()
 {
-  /* Debugging */
   set_led_on( RED_OFFSET + 0 );
   set_led_flash( RED_OFFSET + 0 );
   set_led_flash( RED_OFFSET + 1 );
@@ -208,7 +205,6 @@ void debug_pattern()
   set_shiftBrite_colour(0, GREEN);
   set_shiftBrite_flash(0);
 }
-#endif
 
 void setup()
 {
@@ -244,10 +240,6 @@ void setup()
   
   Serial.begin(9600);
   Serial.setTimeout(100);
-
-#ifdef DEBUG
-  debug_pattern();
-#endif
 }
 
 void loop()
@@ -402,6 +394,7 @@ void serialEvent() {
         [light] ON/OFF/FLASH [Colour]?
         off  = everything off until next command
         flash [speed]
+        sample
 
     [light]: T0, T1, S0, R0, R1, G0, G1, G2, Y0, Y1, Y2  (T => TriColour, S => ShiftBrite)
     [colour]: R,G,B optional, only used on T#, S#
@@ -415,6 +408,8 @@ void serialEvent() {
   }
   else if ( sscanf(cmd_str, "flash %d", &arg) == 1 )
     flash_speed = arg;
+  else if ( String(cmd_str).equalsIgnoreCase("sample") )
+    sample_pattern();
   else
   {
     sleeping = false;
