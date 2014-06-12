@@ -18,7 +18,7 @@
 
 typedef struct colour { unsigned int r; unsigned int g; unsigned int b; } Colour;
 typedef struct { Colour colour; unsigned int pins[3]; bool on; bool flash; } RGBLed;
-typedef struct { Colour colour;
+typedef struct { Colour colour; Colour offColour;
                  unsigned int data; unsigned int latch; unsigned int enable; unsigned int clock;
                  bool on; bool flash; HughesyShiftBrite hsb; } ShiftBrite;
 
@@ -136,7 +136,7 @@ void update_shiftBrite( unsigned int idx )
   if ( shiftBrite[idx].on )
     shiftBrite[idx].hsb.sendColour(shiftBrite[idx].colour.r,shiftBrite[idx].colour.g,shiftBrite[idx].colour.b);
   else
-    shiftBrite[idx].hsb.sendColour(SB_BLACK.r, SB_BLACK.g, SB_BLACK.b);
+    shiftBrite[idx].hsb.sendColour(shiftBrite[idx].offColour.r,shiftBrite[idx].offColour.g,shiftBrite[idx].offColour.b);
 }
 
 float SB_RGB_SCALE = 1023/255;
@@ -146,6 +146,13 @@ void set_shiftBrite_colour( unsigned int idx, struct colour c )
   shiftBrite[idx].colour.g = (int)((255-c.g) * SB_RGB_SCALE);
   shiftBrite[idx].colour.b = (int)((255-c.b) * SB_RGB_SCALE);
   update_shiftBrite(idx);
+}
+
+void set_shiftBrite_offColour( unsigned int idx, struct colour c )
+{
+  shiftBrite[idx].offColour.r = (int)((255-c.r) * SB_RGB_SCALE);
+  shiftBrite[idx].offColour.g = (int)((255-c.g) * SB_RGB_SCALE);
+  shiftBrite[idx].offColour.b = (int)((255-c.b) * SB_RGB_SCALE);
 }
 
 void set_shiftBrite_flash( unsigned int idx )
@@ -172,6 +179,7 @@ void set_shiftBrite_on( unsigned int idx )
 void set_shiftBrite_off( unsigned int idx )
 {
   shiftBrite[idx].flash = false;
+  set_shiftBrite_offColour( idx, (struct colour){255-SB_BLACK.r, 255-SB_BLACK.b, 255-SB_BLACK.g} );
   if ( shiftBrite[idx].on )
   {
     shiftBrite[idx].on = false;
@@ -203,6 +211,7 @@ void sample_pattern()
   set_rgb_flash(0);
 
   set_shiftBrite_colour(0, GREEN);
+  set_shiftBrite_offColour(0, PURPLE);
   set_shiftBrite_flash(0);
 }
 
@@ -210,7 +219,7 @@ void setup()
 {
   rgb_leds[0] = (RGBLed){{255,255,255}, {3,6,5}, false, false};
   rgb_leds[1] = (RGBLed){{255,255,255}, {9,11,10}, false, false};
-  shiftBrite[0] = (ShiftBrite){SB_BLACK, 7,8,12,13, false, false};
+  shiftBrite[0] = (ShiftBrite){SB_BLACK, SB_BLACK, 7,8,12,13, false, false};
 
   for( unsigned int i = 0; i < sizeof(led_pins)/sizeof(led_pins[0]); i++)
   {
@@ -343,8 +352,13 @@ void rgb_cmd( char *cmd )
 
 void sb_cmd_colour( int idx, char *colour )
 {
-  int r,g,b;
-  if ( sscanf( colour, "%d,%d,%d", &r, &g, &b) == 3 )
+  int r,g,b, oR,oG,oB;
+  if ( sscanf( colour, "%d,%d,%d %d,%d,%d", &r, &g, &b, &oR, &oG, &oB) == 6 )
+  {
+    set_shiftBrite_colour( idx, (struct colour){255-constrain(r, 0, 255), 255-constrain(g, 0, 255), 255-constrain(b, 0, 255)} );
+    set_shiftBrite_offColour( idx, (struct colour){255-constrain(oR, 0, 255), 255-constrain(oG, 0, 255), 255-constrain(oB, 0, 255)} );
+  }
+  else if ( sscanf( colour, "%d,%d,%d", &r, &g, &b ) == 3 )
   {
     set_shiftBrite_colour( idx, (struct colour){255-constrain(r, 0, 255), 255-constrain(g, 0, 255), 255-constrain(b, 0, 255)} );
   }
@@ -356,7 +370,7 @@ void sb_cmd( char *cmd )
   char op[80];
   char arg[80];
   int r,g,b;
-  if ( sscanf(cmd + sizeof(char), "%d %s %s", &idx, op, arg) >= 2)
+  if ( sscanf(cmd + sizeof(char), "%d %s %[^\n]", &idx, op, arg) >= 2)
   {
     if ( idx >= sizeof(shiftBrite)/sizeof(shiftBrite[0]))
     {
@@ -369,7 +383,7 @@ void sb_cmd( char *cmd )
       set_shiftBrite_on( idx );
     }
     else if ( String("OFF").equalsIgnoreCase(op) )
-      set_shiftBrite_off( idx  );
+      set_shiftBrite_off( idx );
     else if ( String("FLASH").equalsIgnoreCase(op) )
     {
       sb_cmd_colour( idx, arg );
